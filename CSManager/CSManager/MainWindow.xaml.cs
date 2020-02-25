@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Collections.ObjectModel;
+using System.Threading;
 
 namespace CSManager
 {
@@ -24,55 +25,96 @@ namespace CSManager
         public MainWindow()
         {
             InitializeComponent();
-            this.serverlist.ItemsSource = Servers;
             Models.ServerModel server = new Models.ServerModel
             {
                 Num = 1,
-                IP = "127.0.0.1",
+                IP = "192.168.0.12",
                 State = Models.ServerState.Off,
-                Mac = "A0B0C0D0E0F0"
+                Mac = "A0B0C0D0E0F0",
+                Mode= Models.ServerMode.xServer,
+                ServerName="main",
+                UserName="administrator",
+                Password="0p-0p-0p-"
             };
             Models.ServerModel server2 = new Models.ServerModel
             {
                 Num = 1,
                 IP = "127.0.0.1",
-                State = Models.ServerState.Off,
-                Mac = "A1B1C1D1E1F1"
+                State = Models.ServerState.Online,
+                Mac = "A1B1C1D1E1F1",
+                ServerName="server01",
+                UserName = "administrator",
+                Password = "0p-0p-0p-"
             };
-            Servers.Add(server2);
-            Servers.Add(server);
+            Models.ServerModel server1 = new Models.ServerModel
+            {
+                Num = 1,
+                IP = "127.0.0.1",
+                State = Models.ServerState.Online,
+                Mac = "A1B1C1D1E1F1",
+                ServerName = "xswitch",
+                Mode= Models.ServerMode.xSwitch,
+                UserName = "administrator",
+                Password = "0p-0p-0p-"
+            };
+            Servers.Add(new ViewModel.ServerViewModel { Server=server});
+
+            Servers.Add(new ViewModel.ServerViewModel { Server = server2 });
+            Servers.Add(new ViewModel.ServerViewModel { Server = server1 });
 
             ServerService = new ServerStartClass();
+            Schtask = new CSManager.CSSchtasks();
+
+            //ServerList.ItemsSource = Servers;
+
+            DataContext = this;
+
         }
 
         private void btn_startall_Click(object sender, RoutedEventArgs e)
         {
             foreach(var s in Servers)
             {
-                ServerService.WakeServer(s.IP, s.Mac);
+                var pingResult = Commons.NetHelper.Ping(s.IP);
+                if(!pingResult)
+                    ServerService.WakeServer(s.IP, s.Server.Mac);
             }
         }
 
         private void btn_shutdownall_Click(object sender, RoutedEventArgs e)
         {
-
-        }
-
-        private void btn_addserver_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void btn_subserver_Click(object sender, RoutedEventArgs e)
-        {
-
+            foreach(var s in Servers)
+            {
+                var pingResult = Commons.NetHelper.Ping(s.IP);
+                if (!pingResult)
+                {
+                    s.State = Models.ServerState.Off;
+                    continue;
+                }
+                Models.SchtaskModel shutdown = new Models.SchtaskModel()
+                {
+                    TaskName = Commons.Constants.ShutDown,
+                    TaskPath = Commons.Constants.ShutDownBat
+                };
+                Schtask.Query(s.Server, shutdown);
+                if (shutdown.TaskStatus == Models.SchtaskStatus.NotExist)
+                {
+                    Schtask.CreateTask(s.Server, shutdown);
+                }
+                if (shutdown.TaskStatus == Models.SchtaskStatus.Exist)
+                    Schtask.Run(s.Server, shutdown);
+                else
+                    s.State = Models.ServerState.Warn;
+            }
         }
 
         private void btn_startSelected_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                var value = serverlist.SelectedValue;
+                var value = ServerList.SelectedValue;
+                if (value == null)
+                    return;
                 var model = value as Models.ServerModel;
                 var mac = model.Mac;
                 var ip = model.IP;
@@ -84,13 +126,137 @@ namespace CSManager
             }
         }
         #region 属性
-        public ObservableCollection<Models.ServerModel> Servers { get; set; } = new ObservableCollection<Models.ServerModel>();
+        public ObservableCollection<ViewModel.ServerViewModel> Servers { get; set; } = new ObservableCollection<ViewModel.ServerViewModel>();
         public ServerStartClass ServerService { get; set; }
+        public CSSchtasks Schtask { get; set; }
+
         #endregion
 
         private void btn_shutdown_Click(object sender, RoutedEventArgs e)
         {
 
+            var value = ServerList.SelectedValue;
+            if (value == null)
+                return;
+
+            var model = value as Models.ServerModel;
+            var pingResult = Commons.NetHelper.Ping(model.IP);
+            if (!pingResult)
+            {
+                model.State = Models.ServerState.Off;
+                return;
+            }
+            Models.SchtaskModel shutdown = new Models.SchtaskModel
+            {
+                TaskName = Commons.Constants.ShutDown,
+                TaskPath = Commons.Constants.ShutDownBat
+            };
+            Schtask.Query(model, shutdown);
+            if (shutdown.TaskStatus == Models.SchtaskStatus.NotExist)
+            {
+                Schtask.CreateTask(model, shutdown);
+            }
+            if (shutdown.TaskStatus == Models.SchtaskStatus.Exist)
+                Schtask.Run(model, shutdown);
+            else
+                model.State = Models.ServerState.Warn;
+        }
+
+        private void restart_Click(object sender, RoutedEventArgs e)
+        {
+            var value = ServerList.SelectedValue;
+            if (value == null)
+                return;
+            var model = value as Models.ServerModel;
+            var pingResult = Commons.NetHelper.Ping(model.IP);
+            if (!pingResult)
+            {
+                model.State = Models.ServerState.Off;
+                return;
+            }
+            Models.SchtaskModel xServerStartModel = new Models.SchtaskModel
+            {
+                TaskName = Commons.Constants.ReStart,
+                TaskPath = Commons.Constants.ReStartBat
+            };
+            Schtask.Query(model, xServerStartModel);
+            if (xServerStartModel.TaskStatus == Models.SchtaskStatus.NotExist)
+            {
+                Schtask.CreateTask(model, xServerStartModel);
+            }
+            if (xServerStartModel.TaskStatus == Models.SchtaskStatus.Exist)
+                Schtask.Run(model, xServerStartModel);
+            else
+                model.State = Models.ServerState.Warn;
+        }
+
+        private void runprocess_Click(object sender, RoutedEventArgs e)
+        {
+            var value = ServerList.SelectedValue;
+            if (value == null)
+                return;
+            var server = (value as ViewModel.ServerViewModel);
+            var pingResult = Commons.NetHelper.Ping(server.IP);
+            if (!pingResult)
+                return;
+
+            Models.SchtaskModel StartModel = new Models.SchtaskModel();
+            switch (server.Mode)
+            {
+                case Models.ServerMode.xPanel:
+                    {
+                        StartModel.TaskName = Commons.Constants.xPanel;
+                        StartModel.TaskPath = Commons.Constants.xPanelBat; break;
+                    };
+                case Models.ServerMode.xSwitch:
+                    {
+                        StartModel.TaskName = Commons.Constants.xSwitch;
+                        StartModel.TaskPath = Commons.Constants.xSwitchBat; break;
+                    };
+                case Models.ServerMode.xServer:
+                    {
+                        StartModel.TaskName = Commons.Constants.xServer;
+                        StartModel.TaskPath = Commons.Constants.xServerBat; break;
+                    };
+            }
+
+            Schtask.Query(server.Server, StartModel);
+            if (StartModel.TaskStatus == Models.SchtaskStatus.NotExist)
+            {
+                Schtask.CreateTask(server.Server, StartModel);
+            }
+            if (StartModel.TaskStatus == Models.SchtaskStatus.Exist)
+                Schtask.Run(server.Server, StartModel);
+            else
+                server.State = Models.ServerState.Warn;
+        }
+        private void addserver_Click(object sender, RoutedEventArgs e)
+        {
+            ServerWindow serverWindow = new CSManager.ServerWindow();
+            serverWindow.ShowDialog();
+            var s = (Models.ServerModel)serverWindow.ServerModel.Clone();
+            if (Servers != null)
+                Servers.Add(new ViewModel.ServerViewModel() { Server = s });
+        }
+
+        private void deleteserver_Click(object sender, RoutedEventArgs e)
+        {
+            var value = ServerList.SelectedValue;
+            if (value == null)
+                return;
+            var server = (value as ViewModel.ServerViewModel);
+            Servers.Remove(server);
+        }
+
+        private void editserver_Click(object sender, RoutedEventArgs e)
+        {
+            var value = ServerList.SelectedValue;
+            if (value == null)
+                return;
+            var server = (value as ViewModel.ServerViewModel);
+            ServerWindow serverWindow = new CSManager.ServerWindow();
+            serverWindow.SetServer(server.Server);
+            serverWindow.ShowDialog();
         }
     }
 }

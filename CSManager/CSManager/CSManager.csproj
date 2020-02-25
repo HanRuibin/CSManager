@@ -34,7 +34,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>start.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationFramework.Aero2" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -55,8 +59,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CmdHelper.cs" />
+    <Compile Include="Commons\NetHelper.cs" />
+    <Compile Include="Commons\XmlHelper.cs" />
+    <Compile Include="CSSchtasks.cs" />
     <Compile Include="IServer.cs" />
+    <Compile Include="Models\SchtaskModel.cs" />
+    <Compile Include="Models\ServerMode.cs" />
     <Compile Include="ServerStartClass.cs" />
+    <Compile Include="ServerWindow.xaml.cs">
+      <DependentUpon>ServerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModel\ServerViewModel.cs" />
+    <Compile Include="ViewModel\ViewModelBase.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -70,6 +85,22 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="ServerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Styling\CSManagerButton.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Styling\ListBoxItem.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Styling\MenuItemStyle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\ServerModel.cs" />
@@ -91,6 +122,14 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="BatScripts\ReStartxSwitch.bat" />
+    <None Include="BatScripts\RunxServer.bat" />
+    <None Include="BatScripts\ReStartxServer.bat" />
+    <None Include="BatScripts\ReStart.bat" />
+    <None Include="BatScripts\RunxSwitch.bat" />
+    <None Include="BatScripts\ShutDown.bat" />
+    <None Include="BatScripts\ReStartxPanel.bat" />
+    <None Include="BatScripts\RunxPanel.bat" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -100,7 +139,57 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Styling\graphics\qidong %281%29.png" />
+    <Resource Include="Styling\graphics\startP_normal.png" />
+    <Resource Include="Styling\graphics\startP_over.png" />
+    <Resource Include="Styling\graphics\shutdown_over.png" />
+    <Resource Include="Styling\graphics\start_over.png" />
+    <Resource Include="Styling\graphics\Start_normal.png" />
+    <Resource Include="Styling\graphics\qidong.png" />
+    <Resource Include="Styling\graphics\zhongqi %281%29.png" />
+    <Resource Include="Styling\graphics\zhongqi.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\graphics\start_click.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\graphics\shutdown_click.png" />
+    <Resource Include="Styling\graphics\shutdown_normal.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\graphics\btn_add_click.png" />
+    <Resource Include="Styling\graphics\btn_add_normal.png" />
+    <Resource Include="Styling\graphics\btn_delete_click.png" />
+    <Resource Include="Styling\graphics\btn_delete_normal.png" />
+    <Resource Include="Styling\graphics\btn_delete_over.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\graphics\btn_add _over.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\graphics\server_over.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\graphics\server_pressed.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\graphics\server_normal.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\icons\start.ico" />
+    <Resource Include="Styling\icons\restart.ico" />
+    <Resource Include="Styling\icons\run.ico" />
+    <Resource Include="Styling\icons\add.ico" />
+    <Resource Include="Styling\icons\delete.ico" />
+    <Resource Include="Styling\icons\shutdown.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="start.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Styling\icons\edit.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

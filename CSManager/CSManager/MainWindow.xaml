@@ -4,46 +4,64 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CSManager"
-        mc:Ignorable="d"
-        Title="CSManager" Height="350" Width="525">
+        mc:Ignorable="d" Icon="/Styling/icons/start.ico"
+        Title="CSManager" Height="400" Width="560" Background="#FF3C3838" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
-            <StackPanel Orientation="Horizontal" Margin="2">
-                <Button x:Name="btn_startall" Click="btn_startall_Click" Content="启动" Width="90" Height="90" Padding="2" Margin="2"/>
-                <Button x:Name="btn_shutdownall" Click="btn_shutdownall_Click" Content="关闭" Width="90" Padding="2" Margin="2"/>
-                <Button x:Name="btn_addserver" Click="btn_addserver_Click" Content="+" Width="90" Padding="2" Margin="2"/>
-                <Button x:Name="btn_subserver" Click="btn_subserver_Click" Content="-" Width="90" Padding="2" Margin="2"/>
-            </StackPanel>
+            <WrapPanel Orientation="Horizontal" Margin="2">
+                <Button x:Name="btn_startall" Click="btn_startall_Click" Content="启动" VerticalAlignment="Center" HorizontalAlignment="Center"  Width="60" Height="60" Padding="2" Margin="2" Style="{StaticResource CSButton_StartAll}"/>
+                <Button x:Name="btn_shutdownall" Click="btn_shutdownall_Click" Content="关闭" Width="60" Padding="2" Margin="2" Style="{StaticResource CSButton_ShutdownAll}" HorizontalAlignment="Center"/>
+                <!--<Button x:Name="btn_addserver" Click="btn_addserver_Click" Content="添加" ToolTip="添加设备" Width="60" Padding="2" Margin="2" Style="{StaticResource  CSButton_add}" HorizontalAlignment="Center"/>
+                <Button x:Name="btn_subserver" Click="btn_subserver_Click" Content="删除" ToolTip="删除设备" Width="60" Padding="2" Margin="2" Style="{StaticResource CSButton_delete}" HorizontalAlignment="Center"/>-->
+            </WrapPanel>
         </Grid>
+        
         <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Label Content="服务器列表"/>
-            <DataGrid x:Name="serverlist" AutoGenerateColumns="False" AlternatingRowBackground="AliceBlue" CanUserAddRows="False"  Grid.Row="1">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="序号" Binding="{Binding Num}" Width="auto"/>
-                    <DataGridTextColumn Header="IP地址" Binding="{Binding IP}" Width="120" />
-                    <DataGridTextColumn Header="MAC" Binding="{Binding Mac}" Width="auto"/>
-                    <DataGridTextColumn Header="状态" Binding="{Binding State}"/>
-                    <DataGridTemplateColumn Header="">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <ItemContainerTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button x:Name="btn_startSelected" Content="启动" Click="btn_startSelected_Click"/>
-                                    <Button x:Name="btn_shutdown" Content="关机" Click="btn_shutdown_Click" />
-                                </StackPanel>
-                                
-                            </ItemContainerTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+            <ListBox x:Name="ServerList" ItemsSource="{Binding Servers}" ItemTemplate="{StaticResource ServerTemplate}" ItemContainerStyle="{StaticResource ServerItem}">
+                <ListBox.ContextMenu>
+                    <ContextMenu x:Name="menu" BorderThickness="0" Background="#4d4d4d" Foreground="White">
+                        <MenuItem Header="开机" Click="btn_startSelected_Click">
+                            <MenuItem.Icon>
+                                <Image Source="/Styling/icons/start.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="关机" Click="btn_shutdown_Click" >
+                            <MenuItem.Icon>
+                                <Image Source="/Styling/icons/shutdown.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="重启" x:Name="restart" Click="restart_Click" >
+                            <MenuItem.Icon>
+                                <Image Source="/Styling/icons/restart.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem  Header="运行" x:Name="runprocess" Click="runprocess_Click" >
+                            <MenuItem.Icon>
+                                <Image Source="/Styling/icons/run.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="添加" x:Name="addserver" Click="addserver_Click" >
+                            <MenuItem.Icon>
+                                <Image Source="/Styling/icons/add.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="删除" x:Name="deleteserver" Click="deleteserver_Click" >
+                            <MenuItem.Icon>
+                                <Image Source="/Styling/icons/delete.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="编辑" x:Name="editserver" Click="editserver_Click" >
+                            <MenuItem.Icon>
+                                <Image Source="/Styling/icons/edit.ico"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+            </ListBox>
         </Grid>
     </Grid>
 </Window>

@@ -4,6 +4,12 @@
              xmlns:local="clr-namespace:CSManager"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Styling/CSManagerButton.xaml"/>
+                <ResourceDictionary Source="/Styling/ListBoxItem.xaml"/>
+                <ResourceDictionary Source="/Styling/MenuitemStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

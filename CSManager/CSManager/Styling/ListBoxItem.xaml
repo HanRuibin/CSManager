@@ -1,0 +1,122 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:models="clr-namespace:CSManager.Models"
+                    xmlns:local="clr-namespace:CSManager.Styling">
+    <Style TargetType="ListBoxItem" x:Key="ServerItem">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="border" BorderBrush="#FF5C635C" BorderThickness="1" CornerRadius="2">
+                        <Grid Background="#FF292929">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Image x:Name="img" Grid.Column="0" Source="/Styling/graphics/server_normal.png" Stretch="None" HorizontalAlignment="Left" Margin="2 2 10 2"/>
+                            <ContentPresenter Grid.Column="1" HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="img" Property="Image.Source" Value="/Styling/graphics/server_pressed.png"/>
+                            <!--<Setter TargetName="border" Property="Border.BorderBrush" Value="#FF7A827A"/>-->
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <!--<Setter TargetName="img" Property="Image.Source" Value="/Styling/graphics/server_pressed.png"/>-->
+                            <Setter TargetName="border" Property="Border.BorderBrush" Value="LightGreen"/>
+
+                        </Trigger>
+                        
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        
+    </Style>
+    <Style TargetType="{x:Type CheckBox}" x:Key="checkbox_state">
+        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="{TemplateBinding Background}" Width="25" Height="12" Margin="2 2 5 2" CornerRadius="2" VerticalAlignment="Center"/>
+                        <ContentPresenter Grid.Column="1" HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}" Width="{TemplateBinding Width}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <DataTemplate DataType="{x:Type models:ServerModel}" x:Key="ServerTemplate">
+        <Grid Margin="2">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <!--<TextBlock x:Name="ServerName" Text="{Binding Path=ServerName}" Background="Transparent" Foreground="White" VerticalAlignment="Center" Margin="30 0 10 0"/>-->
+            <TextBlock Grid.Row="0" x:Name="serverIP"  Text="{Binding Path=IP}" Background="Transparent" Foreground="White" VerticalAlignment="Center" Margin="30 0 5 0"/>
+            
+            <CheckBox Grid.Row="1" x:Name="serverState" Style="{StaticResource checkbox_state}"  Content="{Binding ServerName}" Background="#FF456345" VerticalAlignment="Center"/>
+            <CheckBox Grid.Row="2" x:Name="Type" Style="{StaticResource checkbox_state}" Content="{Binding Path=Mode}" Background="#FF456345" VerticalAlignment="Center"/>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Path=State}" Value="Online">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard x:Name="onlinestate">
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetName="serverState" Storyboard.TargetProperty="Background.Color" From="DarkGreen" To="LightGreen" AutoReverse="True" RepeatBehavior="Forever" Duration="00:00:0.5"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="onlinestate">
+                        
+                    </StopStoryboard>
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=State}" Value="Off">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard x:Name="off">
+                        <Storyboard >
+                            <ColorAnimation Storyboard.TargetName="serverState" Storyboard.TargetProperty="Background.Color" From="DarkRed" To="Red" Duration="00:00:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="off"/>
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=State}" Value="Warn">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard x:Name="warn">
+                        <Storyboard >
+                            <ColorAnimation Storyboard.TargetName="serverState" Storyboard.TargetProperty="Background.Color" From="Yellow" To="YellowGreen" Duration="00:00:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="warn"/>
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+    <Style TargetType="{x:Type ListBox}">
+        <Setter Property="Background" Value="#FF3A3535"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+    </Style>
+</ResourceDictionary>
