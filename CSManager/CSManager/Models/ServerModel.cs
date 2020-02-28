@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace CSManager.Models
 {
+    [Serializable]
     public class ServerModel:ICloneable
     {
         public int Num { get; set; }
@@ -16,11 +17,6 @@ namespace CSManager.Models
         public string UserName { get; set; }
         public string Password { get; set; }
         public ServerMode Mode { get; set; }
-
-        public static implicit operator ServerMode(ServerModel v)
-        {
-            throw new NotImplementedException();
-        }
 
         public object Clone()
         {

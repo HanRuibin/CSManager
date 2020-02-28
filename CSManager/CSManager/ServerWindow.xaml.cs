@@ -28,6 +28,7 @@ namespace CSManager
                 "xPanel","xServer","xSwitch"
             };
             this.txt_mode.ItemsSource = modes;
+            
         }
 
         private void btn_save_Click(object sender, RoutedEventArgs e)
@@ -51,6 +52,7 @@ namespace CSManager
         }
 
         public Models.ServerModel ServerModel { get; set; }
+        public bool IsUpdated { get; set; }
 
         private void btn_cancel_Click(object sender, RoutedEventArgs e)
         {
@@ -59,6 +61,7 @@ namespace CSManager
 
         internal void SetServer(ServerModel server)
         {
+            
             ServerModel = (Models.ServerModel)server.Clone();
             txt_ip.Text = ServerModel.IP;
             txt_mac.Text = ServerModel.Mac;
@@ -66,6 +69,7 @@ namespace CSManager
             txt_password.Text = ServerModel.Password;
             txt_servername.Text = ServerModel.ServerName;
             txt_username.Text = ServerModel.UserName;
+            IsUpdated = true;
         }
     }
 }

@@ -25,50 +25,28 @@ namespace CSManager
         public MainWindow()
         {
             InitializeComponent();
-            Models.ServerModel server = new Models.ServerModel
-            {
-                Num = 1,
-                IP = "192.168.0.12",
-                State = Models.ServerState.Off,
-                Mac = "A0B0C0D0E0F0",
-                Mode= Models.ServerMode.xServer,
-                ServerName="main",
-                UserName="administrator",
-                Password="0p-0p-0p-"
-            };
-            Models.ServerModel server2 = new Models.ServerModel
-            {
-                Num = 1,
-                IP = "127.0.0.1",
-                State = Models.ServerState.Online,
-                Mac = "A1B1C1D1E1F1",
-                ServerName="server01",
-                UserName = "administrator",
-                Password = "0p-0p-0p-"
-            };
-            Models.ServerModel server1 = new Models.ServerModel
-            {
-                Num = 1,
-                IP = "127.0.0.1",
-                State = Models.ServerState.Online,
-                Mac = "A1B1C1D1E1F1",
-                ServerName = "xswitch",
-                Mode= Models.ServerMode.xSwitch,
-                UserName = "administrator",
-                Password = "0p-0p-0p-"
-            };
-            Servers.Add(new ViewModel.ServerViewModel { Server=server});
-
-            Servers.Add(new ViewModel.ServerViewModel { Server = server2 });
-            Servers.Add(new ViewModel.ServerViewModel { Server = server1 });
-
+            
             ServerService = new ServerStartClass();
             Schtask = new CSManager.CSSchtasks();
 
-            //ServerList.ItemsSource = Servers;
 
             DataContext = this;
+            ConfigPath = string.Format(@"{0}\Server.Config", Environment.CurrentDirectory);
+            var servers = GetConfig();
+            Task initializeServer = new Task(InitialServers);
+            initializeServer.Start();
 
+
+        }
+
+        private void InitialServers()
+        {
+            var servers = GetConfig();
+            foreach(var s in servers)
+            {
+                ViewModel.ServerViewModel serverVm = new ViewModel.ServerViewModel() { Server = s };
+                Servers.Add(serverVm);
+            }
         }
 
         private void btn_startall_Click(object sender, RoutedEventArgs e)
@@ -129,6 +107,7 @@ namespace CSManager
         public ObservableCollection<ViewModel.ServerViewModel> Servers { get; set; } = new ObservableCollection<ViewModel.ServerViewModel>();
         public ServerStartClass ServerService { get; set; }
         public CSSchtasks Schtask { get; set; }
+        public string ConfigPath { get; set; }
 
         #endregion
 
@@ -235,8 +214,9 @@ namespace CSManager
             ServerWindow serverWindow = new CSManager.ServerWindow();
             serverWindow.ShowDialog();
             var s = (Models.ServerModel)serverWindow.ServerModel.Clone();
-            if (Servers != null)
-                Servers.Add(new ViewModel.ServerViewModel() { Server = s });
+            Servers.Add(new ViewModel.ServerViewModel() { Server = s });
+            SetConfig();
+
         }
 
         private void deleteserver_Click(object sender, RoutedEventArgs e)
@@ -246,6 +226,7 @@ namespace CSManager
                 return;
             var server = (value as ViewModel.ServerViewModel);
             Servers.Remove(server);
+            SetConfig();
         }
 
         private void editserver_Click(object sender, RoutedEventArgs e)
@@ -254,9 +235,39 @@ namespace CSManager
             if (value == null)
                 return;
             var server = (value as ViewModel.ServerViewModel);
+            var sl = Servers.First((s) => s.IP == server.IP);
+
             ServerWindow serverWindow = new CSManager.ServerWindow();
             serverWindow.SetServer(server.Server);
             serverWindow.ShowDialog();
+            if(serverWindow.IsUpdated)
+            {
+                Servers.Remove(sl);
+                Servers.Add(new ViewModel.ServerViewModel { Server = serverWindow.ServerModel });
+                SetConfig();
+            }
+        }
+        private List<Models.ServerModel> GetServers()
+        {
+            List<Models.ServerModel> servers = new List<Models.ServerModel>();
+            foreach(var s in Servers)
+            {
+                servers.Add(s.Server);
+            }
+            return servers;
+        }
+        private void SetConfig()
+        {
+            if (Servers != null)
+            {
+
+                Commons.XmlHelper<List<Models.ServerModel>>.SerialToXml(ConfigPath, GetServers());
+            }
+        }
+        private List<Models.ServerModel> GetConfig()
+        {
+            var servers = Commons.XmlHelper<List<Models.ServerModel>>.Deserialize(ConfigPath);
+            return servers;
         }
     }
 }
