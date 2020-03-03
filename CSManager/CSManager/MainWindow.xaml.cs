@@ -14,13 +14,16 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Collections.ObjectModel;
 using System.Threading;
+using System.IO;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace CSManager
 {
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : MetroWindow
     {
         public MainWindow()
         {
@@ -29,18 +32,73 @@ namespace CSManager
             ServerService = new ServerStartClass();
             Schtask = new CSManager.CSSchtasks();
 
-
             DataContext = this;
             ConfigPath = string.Format(@"{0}\Server.Config", Environment.CurrentDirectory);
-            var servers = GetConfig();
-            Task initializeServer = new Task(InitialServers);
-            initializeServer.Start();
+            if(File.Exists(ConfigPath))
+            {
+                InitialServers();
+            }
+            this.Closing += MainWindow_Closing;
 
-
+            TokenSource = new CancellationTokenSource();
+            Task updateStateTask = new Task(Servers_CollectionChanged);
+            updateStateTask.Start();
         }
 
-        private void InitialServers()
+        private async void Servers_CollectionChanged()
         {
+            try
+            {
+                await Task.Delay(1000 * 5);
+
+                while (!TokenSource.IsCancellationRequested)
+                {
+                    try
+                    {
+                        if (Servers != null)
+                            await Task.Delay(1000 * 5);
+
+                        foreach (var s in Servers)
+                        {
+                            var state = Commons.NetHelper.Ping(s.IP) ? Models.ServerState.Online : Models.ServerState.Off;
+                            Application.Current.Dispatcher.Invoke(() => { s.State = state; });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+
+
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
+
+        private async void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+            var mySettings = new MetroDialogSettings
+            {
+                AffirmativeButtonText = "退出",
+                NegativeButtonText = "取消"
+            };
+            mySettings.ColorScheme = MetroDialogColorScheme.Accented;
+            MessageDialogResult result = await this.ShowMessageAsync("...", "是否退出 ? ", MessageDialogStyle.AffirmativeAndNegative, mySettings);
+
+            if (result == MessageDialogResult.Affirmative)
+            {
+                TokenSource.Cancel();
+                Environment.Exit(0);
+            }
+        }
+
+        private async void InitialServers()
+        {
+            await Task.Delay(500);
             var servers = GetConfig();
             foreach(var s in servers)
             {
@@ -59,31 +117,43 @@ namespace CSManager
             }
         }
 
-        private void btn_shutdownall_Click(object sender, RoutedEventArgs e)
+        private async void btn_shutdownall_Click(object sender, RoutedEventArgs e)
         {
-            foreach(var s in Servers)
+            //confirm if shutdown
+            var mySettings = new MetroDialogSettings
             {
-                var pingResult = Commons.NetHelper.Ping(s.IP);
-                if (!pingResult)
+                AffirmativeButtonText = "确定",
+                NegativeButtonText = "取消"
+            };
+            mySettings.ColorScheme = MetroDialogColorScheme.Accented;
+            MessageDialogResult result = await this.ShowMessageAsync("...", "是否关闭所有设备 ? ", MessageDialogStyle.AffirmativeAndNegative, mySettings);
+
+            if (result == MessageDialogResult.Affirmative)
+            {
+                foreach (var s in Servers)
                 {
-                    s.State = Models.ServerState.Off;
-                    continue;
+                    var pingResult = Commons.NetHelper.Ping(s.IP);
+                    if (!pingResult)
+                    {
+                        s.State = Models.ServerState.Off;
+                        continue;
+                    }
+                    Models.SchtaskModel shutdown = new Models.SchtaskModel()
+                    {
+                        TaskName = Commons.Constants.ShutDown,
+                        TaskPath = Commons.Constants.ShutDownBat
+                    };
+                    Schtask.Query(s.Server, shutdown);
+                    if (shutdown.TaskStatus == Models.SchtaskStatus.NotExist)
+                    {
+                        Schtask.CreateTask(s.Server, shutdown);
+                    }
+                    if (shutdown.TaskStatus == Models.SchtaskStatus.Exist)
+                        Schtask.Run(s.Server, shutdown);
+                    else
+                        s.State = Models.ServerState.Warn;
                 }
-                Models.SchtaskModel shutdown = new Models.SchtaskModel()
-                {
-                    TaskName = Commons.Constants.ShutDown,
-                    TaskPath = Commons.Constants.ShutDownBat
-                };
-                Schtask.Query(s.Server, shutdown);
-                if (shutdown.TaskStatus == Models.SchtaskStatus.NotExist)
-                {
-                    Schtask.CreateTask(s.Server, shutdown);
-                }
-                if (shutdown.TaskStatus == Models.SchtaskStatus.Exist)
-                    Schtask.Run(s.Server, shutdown);
-                else
-                    s.State = Models.ServerState.Warn;
-            }
+            }           
         }
 
         private void btn_startSelected_Click(object sender, RoutedEventArgs e)
@@ -93,8 +163,8 @@ namespace CSManager
                 var value = ServerList.SelectedValue;
                 if (value == null)
                     return;
-                var model = value as Models.ServerModel;
-                var mac = model.Mac;
+                var model = value as ViewModel.ServerViewModel;
+                var mac = model.Server.Mac;
                 var ip = model.IP;
                 ServerService.WakeServer(ip,mac);
             }
@@ -109,64 +179,90 @@ namespace CSManager
         public CSSchtasks Schtask { get; set; }
         public string ConfigPath { get; set; }
 
+        private CancellationTokenSource TokenSource;
+        private object locker = new object();
         #endregion
 
-        private void btn_shutdown_Click(object sender, RoutedEventArgs e)
+        private async void btn_shutdown_Click(object sender, RoutedEventArgs e)
         {
-
             var value = ServerList.SelectedValue;
             if (value == null)
                 return;
 
-            var model = value as Models.ServerModel;
+            var model = value as ViewModel.ServerViewModel;
             var pingResult = Commons.NetHelper.Ping(model.IP);
             if (!pingResult)
             {
                 model.State = Models.ServerState.Off;
                 return;
             }
-            Models.SchtaskModel shutdown = new Models.SchtaskModel
+            var mySettings = new MetroDialogSettings
             {
-                TaskName = Commons.Constants.ShutDown,
-                TaskPath = Commons.Constants.ShutDownBat
+                AffirmativeButtonText = "确定",
+                NegativeButtonText = "取消"
             };
-            Schtask.Query(model, shutdown);
-            if (shutdown.TaskStatus == Models.SchtaskStatus.NotExist)
+            mySettings.ColorScheme = MetroDialogColorScheme.Accented;
+            var strWarnning = string.Format("是否关闭 {0} ?", model.IP);
+            MessageDialogResult result = await this.ShowMessageAsync("...", strWarnning, MessageDialogStyle.AffirmativeAndNegative, mySettings);
+
+            if (result == MessageDialogResult.Affirmative)
             {
-                Schtask.CreateTask(model, shutdown);
+                Models.SchtaskModel shutdown = new Models.SchtaskModel
+                {
+                    TaskName = Commons.Constants.ShutDown,
+                    TaskPath = Commons.Constants.ShutDownBat
+                };
+                Schtask.Query(model.Server, shutdown);
+                if (shutdown.TaskStatus == Models.SchtaskStatus.NotExist)
+                {
+                    Schtask.CreateTask(model.Server, shutdown);
+                }
+                if (shutdown.TaskStatus == Models.SchtaskStatus.Exist)
+                    Schtask.Run(model.Server, shutdown);
+                else
+                    model.State = Models.ServerState.Warn;
             }
-            if (shutdown.TaskStatus == Models.SchtaskStatus.Exist)
-                Schtask.Run(model, shutdown);
-            else
-                model.State = Models.ServerState.Warn;
         }
 
-        private void restart_Click(object sender, RoutedEventArgs e)
+        private async void restart_Click(object sender, RoutedEventArgs e)
         {
             var value = ServerList.SelectedValue;
             if (value == null)
                 return;
-            var model = value as Models.ServerModel;
+            var model = value as ViewModel.ServerViewModel;
             var pingResult = Commons.NetHelper.Ping(model.IP);
             if (!pingResult)
             {
                 model.State = Models.ServerState.Off;
                 return;
             }
-            Models.SchtaskModel xServerStartModel = new Models.SchtaskModel
+            var mySettings = new MetroDialogSettings
             {
-                TaskName = Commons.Constants.ReStart,
-                TaskPath = Commons.Constants.ReStartBat
+                AffirmativeButtonText = "确定",
+                NegativeButtonText = "取消"
             };
-            Schtask.Query(model, xServerStartModel);
-            if (xServerStartModel.TaskStatus == Models.SchtaskStatus.NotExist)
+            mySettings.ColorScheme = MetroDialogColorScheme.Accented;
+            var strWarnning = string.Format("是否关闭 {0}", model.IP);
+            MessageDialogResult result = await this.ShowMessageAsync("...", strWarnning, MessageDialogStyle.AffirmativeAndNegative, mySettings);
+
+            if (result == MessageDialogResult.Affirmative)
             {
-                Schtask.CreateTask(model, xServerStartModel);
+                Models.SchtaskModel xServerStartModel = new Models.SchtaskModel
+                {
+                    TaskName = Commons.Constants.ReStart,
+                    TaskPath = Commons.Constants.ReStartBat
+                };
+                Schtask.Query(model.Server, xServerStartModel);
+                if (xServerStartModel.TaskStatus == Models.SchtaskStatus.NotExist)
+                {
+                    Schtask.CreateTask(model.Server, xServerStartModel);
+                }
+                if (xServerStartModel.TaskStatus == Models.SchtaskStatus.Exist)
+                    Schtask.Run(model.Server, xServerStartModel);
+                else
+                    model.State = Models.ServerState.Warn;
             }
-            if (xServerStartModel.TaskStatus == Models.SchtaskStatus.Exist)
-                Schtask.Run(model, xServerStartModel);
-            else
-                model.State = Models.ServerState.Warn;
+                
         }
 
         private void runprocess_Click(object sender, RoutedEventArgs e)
@@ -178,6 +274,10 @@ namespace CSManager
             var pingResult = Commons.NetHelper.Ping(server.IP);
             if (!pingResult)
                 return;
+            else
+            {
+                server.State = Models.ServerState.Online;
+            }
 
             Models.SchtaskModel StartModel = new Models.SchtaskModel();
             switch (server.Mode)
@@ -213,20 +313,37 @@ namespace CSManager
         {
             ServerWindow serverWindow = new CSManager.ServerWindow();
             serverWindow.ShowDialog();
-            var s = (Models.ServerModel)serverWindow.ServerModel.Clone();
-            Servers.Add(new ViewModel.ServerViewModel() { Server = s });
+            var s = (Models.ServerModel)serverWindow.ServerModel;
+            if (s == null)
+                return;
+            var server = (Models.ServerModel)s.Clone();
+            var newserver = new ViewModel.ServerViewModel() { Server = server };
+            Servers.Add(newserver);
             SetConfig();
-
         }
 
-        private void deleteserver_Click(object sender, RoutedEventArgs e)
+        private async void deleteserver_Click(object sender, RoutedEventArgs e)
         {
             var value = ServerList.SelectedValue;
             if (value == null)
                 return;
             var server = (value as ViewModel.ServerViewModel);
-            Servers.Remove(server);
-            SetConfig();
+
+            var mySettings = new MetroDialogSettings
+            {
+                AffirmativeButtonText = "确定",
+                NegativeButtonText = "取消"
+            };
+            mySettings.ColorScheme = MetroDialogColorScheme.Accented;
+            var strWarnning = string.Format("是否删除服务器 {0} ?", server.IP);
+            MessageDialogResult result = await this.ShowMessageAsync("...", strWarnning, MessageDialogStyle.AffirmativeAndNegative, mySettings);
+
+            if (result == MessageDialogResult.Affirmative)
+            {
+                Servers.Remove(server);
+                SetConfig();
+            }
+              
         }
 
         private void editserver_Click(object sender, RoutedEventArgs e)
@@ -242,8 +359,13 @@ namespace CSManager
             serverWindow.ShowDialog();
             if(serverWindow.IsUpdated)
             {
-                Servers.Remove(sl);
-                Servers.Add(new ViewModel.ServerViewModel { Server = serverWindow.ServerModel });
+                //Servers.Remove(sl);
+                //Servers.Add(new ViewModel.ServerViewModel { Server = serverWindow.ServerModel });
+                var editServer = serverWindow.ServerModel;
+                sl.IP = editServer.IP;
+                sl.ServerName = editServer.ServerName;
+                sl.Mode = editServer.Mode;
+                sl.Server = editServer;
                 SetConfig();
             }
         }

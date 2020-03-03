@@ -25,8 +25,10 @@ namespace CSManager
                 cmdProcess.StartInfo.RedirectStandardOutput = true;
                 cmdProcess.StartInfo.UseShellExecute = false;
                 cmdProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                cmdProcess.OutputDataReceived += CmdProcess_OutputDataReceived;
                 //cmdProcess.StartInfo.Arguments = args;
                 cmdProcess.Start();
+                cmdProcess.StandardInput.WriteLine("chcp 437");
                 cmdProcess.StandardInput.WriteLine(args);
                 cmdProcess.StandardInput.WriteLine("exit");
 
@@ -53,6 +55,11 @@ namespace CSManager
             {
                 return string.Empty;
             }
+        }
+
+        private static void CmdProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            
         }
     }
 }

@@ -12,13 +12,14 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using CSManager.Models;
+using MahApps.Metro.Controls;
 
 namespace CSManager
 {
     /// <summary>
     /// ServerWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class ServerWindow : Window
+    public partial class ServerWindow : MetroWindow
     {
         public ServerWindow()
         {

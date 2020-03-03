@@ -61,7 +61,7 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <!--<TextBlock x:Name="ServerName" Text="{Binding Path=ServerName}" Background="Transparent" Foreground="White" VerticalAlignment="Center" Margin="30 0 10 0"/>-->
-            <TextBlock Grid.Row="0" x:Name="serverIP"  Text="{Binding Path=IP}" Background="Transparent" Foreground="White" VerticalAlignment="Center" Margin="30 0 5 0"/>
+            <TextBlock Grid.Row="0" x:Name="serverIP"  Text="{Binding Path=IP}" Background="Transparent" Foreground="White" VerticalAlignment="Center" Margin="30 0 5 0" Width="90"/>
             
             <CheckBox Grid.Row="1" x:Name="serverState" Style="{StaticResource checkbox_state}"  Content="{Binding ServerName}" Background="#FF456345" VerticalAlignment="Center"/>
             <CheckBox Grid.Row="2" x:Name="Type" Style="{StaticResource checkbox_state}" Content="{Binding Path=Mode}" Background="#FF456345" VerticalAlignment="Center"/>

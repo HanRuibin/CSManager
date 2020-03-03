@@ -16,7 +16,7 @@ namespace CSManager
             {
                 var mac = StringToBytes(macString);
                 UdpClient client = new UdpClient();
-                client.Connect(ip, 7070);
+                client.Connect(IPAddress.Broadcast, 7070);
 
                 byte[] magicPacket = new byte[17*6];
                 for (int i = 0; i < 6; i++)

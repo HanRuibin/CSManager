@@ -25,11 +25,11 @@ namespace CSManager
             if(isLocal)
                 cmd = string.Format("schtasks /create /tn {0} /tr {1} /sc once /st {2}", schtask.TaskName, schtask.TaskPath, time);
             else
-                cmd = string.Format("schtasks /create /s {0} /u {1} /p {2} /tn \"{3}\" /tr {4} /sc once /st {5}", server.IP, server.UserName, server.Password, schtask.TaskName, schtask.TaskPath, time);
+                cmd = string.Format("schtasks /create /s {0} /u {1} /p {2} /tn {3} /tr {4} /sc once /st {5}", server.IP, server.UserName, server.Password, schtask.TaskName, schtask.TaskPath, time);
             var result = CmdHelper.ExecuteCmd(cmd);
             if(result.Contains("成功")||result.ToLower().Contains("success"))
             {
-                schtask.TaskStatus = Models.SchtaskStatus.Normal;
+                schtask.TaskStatus = Models.SchtaskStatus.Exist;
             }
             else
             {
@@ -40,14 +40,15 @@ namespace CSManager
         {
             var isLocal = Commons.NetHelper.IsLocalIPAddress(server.IP);
             string cmd;
-
+            //string chcp437 = "chcp 437";
+            //CmdHelper.ExecuteCmd(chcp437);
             if (isLocal)
                 cmd = string.Format("schtasks /query /tn {0}", schtask.TaskName);
             else
-                cmd = string.Format("schtasks /query /s {0} /u {1} /p {2} /tn \"{3}\"", server.IP, server.UserName, server.Password, schtask.TaskName);
+                cmd = string.Format("schtasks /query /s {0} /u {1} /p {2} /tn {3}", server.IP, server.UserName, server.Password, schtask.TaskName);
 
             var result = CmdHelper.ExecuteCmd(cmd).ToLower();
-            if(result.Contains("任务名"))
+            if(result.Contains("任务名")||result.Contains("folder"))
             {
                 schtask.TaskStatus = Models.SchtaskStatus.Exist;
             }
@@ -64,7 +65,7 @@ namespace CSManager
             if(isLocal)
                 cmd = string.Format("schtasks /run /tn {0}", schtask.TaskName);
             else
-                cmd = string.Format("schtasks /run /s {0} /u {1} /p {2} /tn \"{}\"", server.IP, server.UserName, server.Password, schtask.TaskName);
+                cmd = string.Format("schtasks /run /s {0} /u {1} /p {2} /tn {3}", server.IP, server.UserName, server.Password, schtask.TaskName);
 
             var result = CmdHelper.ExecuteCmd(cmd).ToLower();
 

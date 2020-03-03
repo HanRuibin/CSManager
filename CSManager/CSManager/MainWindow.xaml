@@ -1,9 +1,10 @@
-﻿<Window x:Class="CSManager.MainWindow"
+﻿<metro:MetroWindow x:Class="CSManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CSManager"
+        xmlns:metro="http://metro.mahapps.com/winfx/xaml/controls"
         mc:Ignorable="d" Icon="/Styling/icons/start.ico"
         Title="CSManager" Height="400" Width="560" Background="#FF3C3838" WindowStartupLocation="CenterScreen">
     <Grid>
@@ -64,4 +65,4 @@
             </ListBox>
         </Grid>
     </Grid>
-</Window>
+</metro:MetroWindow>
